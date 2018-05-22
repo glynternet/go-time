@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
-	gotime "time"
+	gtime "time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/glynternet/GOHMoney/common"
 )
 
 func Test_New(t *testing.T) {
@@ -18,15 +17,15 @@ func Test_New(t *testing.T) {
 }
 
 func Test_Contains(t *testing.T) {
-	now := gotime.Now()
-	openRange := Range{}
+	now := gtime.Now()
+	var openRange Range
 	openEnded := newTimeRange(t, Start(now))
 	openStarted := newTimeRange(t, End(now))
 	closedEnds := newTimeRange(t, Start(now), End(now.AddDate(1, 0, 0)))
 
 	testSets := []struct {
 		Range
-		gotime.Time
+		gtime.Time
 		contains bool
 	}{
 		{
@@ -145,6 +144,9 @@ func Test_Equal(t *testing.T) {
 
 func newTimeRange(t *testing.T, os ...Option) Range {
 	r, err := New(os...)
-	common.FatalIfError(t, err, "Creating timerange")
-	return *r
+	if err == nil {
+		return *r
+	}
+	t.Fatalf("creating timerange: %s", err)
+	return Range{}
 }
