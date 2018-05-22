@@ -1,8 +1,6 @@
 package time
 
 import (
-	"bytes"
-	"fmt"
 	"testing"
 	gtime "time"
 
@@ -16,93 +14,103 @@ func Test_New(t *testing.T) {
 	assert.Equal(t, NullTime{}, r.End())
 }
 
-func Test_Contains(t *testing.T) {
+func TestRange_Contains(t *testing.T) {
 	now := gtime.Now()
 	var openRange Range
 	openEnded := newTimeRange(t, Start(now))
 	openStarted := newTimeRange(t, End(now))
 	closedEnds := newTimeRange(t, Start(now), End(now.AddDate(1, 0, 0)))
 
-	testSets := []struct {
+	for _, test := range []struct {
+		name string
 		Range
 		gtime.Time
 		contains bool
 	}{
 		{
-			Range:    openRange,
+			name:     "zero-values",
 			contains: true,
 		},
 		{
+			name:     "fully open any time",
 			Range:    openRange,
 			Time:     now,
 			contains: true,
 		},
 		{
+			name:     "open ended before start",
 			Range:    openEnded,
 			Time:     now.AddDate(-1, 0, 0),
 			contains: false,
 		},
 		{
+			name:     "open ended on start",
 			Range:    openEnded,
 			Time:     now,
 			contains: true,
 		},
 		{
+			name:     "open ended after start",
 			Range:    openEnded,
 			Time:     now.AddDate(1, 0, 0),
 			contains: true,
 		},
 		{
+			name:     "open started before end",
 			Range:    openStarted,
 			Time:     now.AddDate(-1, 0, 0),
 			contains: true,
 		},
 		{
+			name:     "open started on end",
 			Range:    openStarted,
 			Time:     now,
-			contains: false,
+			contains: true,
 		},
 		{
+			name:     "open started after end",
 			Range:    openStarted,
 			Time:     now.AddDate(1, 0, 0),
 			contains: false,
 		},
 		{
+			name:     "closed ends before start",
 			Range:    closedEnds,
 			Time:     now.AddDate(-2, 0, 0),
 			contains: false,
 		},
 		{
+			name:     "closed ends on start",
 			Range:    closedEnds,
 			Time:     now,
 			contains: true,
 		},
 		{
+			name:     "closed ends in middle",
 			Range:    closedEnds,
 			Time:     now.AddDate(0, 6, 0),
 			contains: true,
 		},
 		{
+			name:     "closed ends on end",
 			Range:    closedEnds,
 			Time:     now.AddDate(1, 0, 0),
-			contains: false,
+			contains: true,
 		},
 		{
+			name:     "closed ends after end",
 			Range:    closedEnds,
 			Time:     now.AddDate(2, 0, 0),
 			contains: false,
 		},
-	}
-	for _, testSet := range testSets {
-		contains := testSet.Range.Contains(testSet.Time)
-		if contains != testSet.contains {
-			var message bytes.Buffer
-			fmt.Fprint(&message, `Unexpected Contains result.`)
-			fmt.Fprintf(&message, "\nExpected Contains: %t\nActual Contains  : %t", testSet.contains, contains)
-			fmt.Fprintf(&message, "\nTimeRange: %+v", testSet.Range)
-			fmt.Fprintf(&message, "\nTime: %+v", testSet.Time)
-			t.Error(message.String())
-		}
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t,
+				test.contains,
+				test.Range.Contains(test.Time),
+				"Range: %+v\nTime: %+v", test.Range, test.Time,
+			)
+		})
 	}
 }
 
